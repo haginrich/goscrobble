@@ -5,8 +5,8 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/BurntSushi/toml"
 	"github.com/godbus/dbus/v5"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -201,15 +201,12 @@ func ReadConfig() (Config, error) {
 		Str("filename", filename).
 		Msg("reading config file")
 
-	//nolint:gosec
-	data, err := os.ReadFile(filename)
-
 	var config Config
 	var configErr error
 
 	switch {
 	case err == nil:
-		config, configErr = ParseConfig(data)
+		_, configErr = toml.DecodeFile(filename, &config)
 	case os.IsNotExist(err):
 		config = DefaultConfig
 		configErr = DefaultConfig.Write(filename)
@@ -225,11 +222,6 @@ func ReadConfig() (Config, error) {
 	config.Validate()
 
 	return config, nil
-}
-
-func ParseConfig(data []byte) (Config, error) {
-	var config Config
-	return config, toml.Unmarshal(data, &config)
 }
 
 func (c *Config) Validate() {

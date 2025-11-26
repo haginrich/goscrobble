@@ -6,18 +6,8 @@ import (
 	"testing"
 
 	main "github.com/p-mng/goscrobble"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/stretchr/testify/require"
 )
-
-func TestParseConfig(t *testing.T) {
-	data, err := toml.Marshal(main.DefaultConfig)
-	require.NoError(t, err)
-
-	config, err := main.ParseConfig(data)
-	require.NoError(t, err)
-	require.Equal(t, main.DefaultConfig, config)
-}
 
 func TestConfigValidate(t *testing.T) {
 	//nolint:exhaustruct
