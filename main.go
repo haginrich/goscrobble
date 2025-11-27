@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jedib0t/go-pretty/v6/table"
 	lastfm "github.com/p-mng/lastfm-go"
+	"github.com/rodaine/table"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
@@ -146,15 +146,12 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	tbl := table.NewWriter()
-	tbl.SetOutputMirror(os.Stdout)
-
-	tbl.AppendHeader(table.Row{"Artists", "Track", "Album", "Duration", "Timestamp"})
+	tbl := table.New("ARTISTS", "TRACK", "ALBUM", "DURATION", "TIMESTAMP")
 	for _, s := range scrobbles {
-		tbl.AppendRow(table.Row{s.JoinArtists(), s.Track, s.Album, s.Duration, s.Timestamp.Format(time.RFC1123)})
+		tbl.AddRow(s.JoinArtists(), s.Track, s.Album, s.Duration, s.Timestamp.Format(time.RFC1123))
 	}
 
-	tbl.Render()
+	tbl.Print()
 
 	return nil
 }
