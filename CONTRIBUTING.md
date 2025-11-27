@@ -14,4 +14,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 - Add Microsoft Windows support
   - Notifications: <https://git.sr.ht/~jackmordaunt/go-toast>
 - Allow duplicate sink configuration (e.g., two `csv` sinks)
-- Make last.fm API endpoint configurable

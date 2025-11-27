@@ -7,6 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/godbus/dbus/v5"
+	lastfm "github.com/p-mng/lastfm-go"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,7 +26,7 @@ var DefaultConfig = Config{
 		MediaControl: &MediaControlConfig{Command: "media-control", Arguments: []string{"get", "--now"}},
 	},
 	Sinks: SinksConfig{
-		LastFm: &LastFmConfig{Key: "last.fm API key", Secret: "last.fm API secret", SessionKey: "", Username: ""},
+		LastFm: &LastFmConfig{BaseURL: lastfm.BaseURL, Key: "last.fm API key", Secret: "last.fm API secret", SessionKey: "", Username: ""},
 		CSV:    &CSVConfig{Filename: fmt.Sprintf("%s/scrobbles.csv", os.Getenv("HOME"))},
 	},
 }
@@ -71,6 +72,7 @@ type MediaControlConfig struct {
 }
 
 type LastFmConfig struct {
+	BaseURL    string `toml:"base_url"`
 	Key        string `toml:"key"`
 	Secret     string `toml:"secret"`
 	SessionKey string `toml:"session_key"`

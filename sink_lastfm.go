@@ -22,7 +22,14 @@ func LastFmSinkFromConfig(c LastFmConfig) (LastFmSink, error) {
 		return sink, errors.New("last.fm sink is configured, but not authenticated")
 	}
 
-	client, err := lastfm.NewDesktopClient(lastfm.BaseURL, c.Key, c.Secret)
+	var baseURL string
+	if c.BaseURL != "" {
+		baseURL = c.BaseURL
+	} else {
+		baseURL = lastfm.BaseURL
+	}
+
+	client, err := lastfm.NewDesktopClient(baseURL, c.Key, c.Secret)
 	if err != nil {
 		return sink, err
 	}
