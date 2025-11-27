@@ -15,8 +15,15 @@ func SendNotification(_ uint32, summary, body string) (uint32, error) {
 	// https://github.com/julienXX/terminal-notifier
 	cmd := exec.Command("/usr/bin/env", "terminal-notifier", "-title", "goscrobble", "-subtitle", summary, "-message", body)
 	err := cmd.Run()
+	if err != nil {
+		log.Error().
+			Int("exit code", cmd.ProcessState.ExitCode()).
+			Msg("terminal-notifier exited with error")
+		return 0, err
+	}
 
-	log.Debug().Msg("sent desktop notification")
-
-	return 0, err
+	log.Debug().
+		Int("exit code", cmd.ProcessState.ExitCode()).
+		Msg("sent desktop notification using terminal-notifier")
+	return 0, nil
 }

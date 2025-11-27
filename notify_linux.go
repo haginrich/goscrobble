@@ -24,10 +24,12 @@ func SendNotification(replacesID uint32, summary, body string) (uint32, error) {
 		Object("org.freedesktop.Notifications", "/org/freedesktop/Notifications").
 		Call("org.freedesktop.Notifications.Notify", 0, args...).
 		Store(&id)
+	if err != nil {
+		return 0, err
+	}
 
 	log.Debug().
 		Uint32("id", id).
-		Msg("sent desktop notification")
-
-	return id, err
+		Msg("sent desktop notification using dbus")
+	return id, nil
 }
