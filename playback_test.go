@@ -30,6 +30,10 @@ func TestScrobbleJoinArtists(t *testing.T) {
 	require.Equal(t, "Placebo, David Bowie", defaultPlaybackStatus.JoinArtists())
 }
 
+func TestPrettyDuration(t *testing.T) {
+	require.Equal(t, "04:11", defaultPlaybackStatus.PrettyDuration())
+}
+
 func TestPlaybackStatusEquals(t *testing.T) {
 	copied := main.PlaybackStatus{}
 	err := copier.Copy(&copied, &defaultPlaybackStatus)

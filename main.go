@@ -148,7 +148,7 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 
 	tbl := table.New("ARTISTS", "TRACK", "ALBUM", "DURATION", "TIMESTAMP")
 	for _, s := range scrobbles {
-		tbl.AddRow(s.JoinArtists(), s.Track, s.Album, s.Duration, s.Timestamp.Format(time.RFC1123))
+		tbl.AddRow(s.JoinArtists(), s.Track, s.Album, s.PrettyDuration(), s.Timestamp.Format(time.RFC1123))
 	}
 	tbl.Print()
 

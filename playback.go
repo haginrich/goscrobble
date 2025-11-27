@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -45,6 +46,15 @@ type ParsedRegexReplace struct {
 
 func (s Scrobble) JoinArtists() string {
 	return strings.Join(s.Artists, ", ")
+}
+
+func (s Scrobble) PrettyDuration() string {
+	if s.Duration == 0 {
+		return ""
+	}
+	minutes := int(s.Duration.Minutes())
+	seconds := int(s.Duration.Seconds()) % 60
+	return fmt.Sprintf("%02d:%02d", minutes, seconds)
 }
 
 func (p PlaybackStatus) Equals(other PlaybackStatus) bool {
