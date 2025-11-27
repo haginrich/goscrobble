@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"strings"
 	"time"
@@ -39,6 +41,11 @@ func LastFmSinkFromConfig(c LastFmConfig) (LastFmSink, error) {
 
 func (s LastFmSink) Name() string {
 	return "last.fm"
+}
+
+func (s LastFmSink) ID() string {
+	sum := sha256.Sum256([]byte(s.Username))
+	return hex.EncodeToString(sum[:4])
 }
 
 func (s LastFmSink) NowPlaying(scrobble Scrobble) error {

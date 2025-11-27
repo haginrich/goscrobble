@@ -150,7 +150,6 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 	for _, s := range scrobbles {
 		tbl.AddRow(s.JoinArtists(), s.Track, s.Album, s.Duration, s.Timestamp.Format(time.RFC1123))
 	}
-
 	tbl.Print()
 
 	return nil
@@ -164,9 +163,11 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 		fmt.Println("Error reading config file:", err.Error())
 	}
 
+	tbl := table.New("ID", "NAME")
 	for _, sink := range config.SetupSinks() {
-		fmt.Println(sink.Name())
+		tbl.AddRow(sink.ID(), sink.Name())
 	}
+	tbl.Print()
 
 	return nil
 }

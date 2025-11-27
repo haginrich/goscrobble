@@ -17,6 +17,10 @@ func (*FakeSink) Name() string {
 	return "fake sink"
 }
 
+func (*FakeSink) ID() string {
+	return "07670e5e"
+}
+
 func (s *FakeSink) NowPlaying(p main.Scrobble) error {
 	if s.Error {
 		return errors.New("fake error")
