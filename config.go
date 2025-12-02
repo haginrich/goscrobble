@@ -26,8 +26,16 @@ var DefaultConfig = Config{
 		MediaControl: &MediaControlConfig{Command: "media-control", Arguments: []string{"get", "--now"}},
 	},
 	Sinks: SinksConfig{
-		LastFm: &LastFmConfig{BaseURL: lastfm.BaseURL, Key: "last.fm API key", Secret: "last.fm API secret", SessionKey: "", Username: ""},
-		CSV:    &CSVConfig{Filename: fmt.Sprintf("%s/scrobbles.csv", os.Getenv("HOME"))},
+		LastFm: map[string]LastFmConfig{"default": {
+			BaseURL:    lastfm.BaseURL,
+			Key:        "last.fm API key",
+			Secret:     "last.fm API secret",
+			SessionKey: "",
+			Username:   "",
+		}},
+		CSV: map[string]CSVConfig{"default": {
+			Filename: fmt.Sprintf("%s/scrobbles.csv", os.Getenv("HOME")),
+		}},
 	},
 }
 
@@ -58,8 +66,8 @@ type SourcesConfig struct {
 }
 
 type SinksConfig struct {
-	LastFm *LastFmConfig `toml:"lastfm"`
-	CSV    *CSVConfig    `toml:"csv"`
+	LastFm map[string]LastFmConfig `toml:"lastfm"`
+	CSV    map[string]CSVConfig    `toml:"csv"`
 }
 
 type DBusConfig struct {
@@ -129,10 +137,10 @@ func (c Config) SetupSources() []Source {
 func (c Config) SetupSinks() []Sink {
 	var sinks []Sink
 
-	if c.Sinks.LastFm != nil {
+	for _, sinkConfig := range c.Sinks.LastFm {
 		log.Debug().Msg("setting up last.fm sink")
 
-		sink, err := LastFmSinkFromConfig(*c.Sinks.LastFm)
+		sink, err := LastFmSinkFromConfig(sinkConfig)
 		if err != nil {
 			log.Error().
 				Err(err).
@@ -142,10 +150,10 @@ func (c Config) SetupSinks() []Sink {
 		}
 	}
 
-	if c.Sinks.CSV != nil {
+	for _, sinkConfig := range c.Sinks.CSV {
 		log.Debug().Msg("setting up CSV sink")
 
-		sink := CSVSinkFromConfig(*c.Sinks.CSV)
+		sink := CSVSinkFromConfig(sinkConfig)
 		sinks = append(sinks, sink)
 	}
 

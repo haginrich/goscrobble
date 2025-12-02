@@ -79,6 +79,9 @@ func main() {
 				Name:   "lastfm-auth",
 				Usage:  "Authenticate last.fm sand save session key and username",
 				Action: ActionAuthLastFm,
+				Arguments: []cli.Argument{
+					&cli.StringArg{Name: "username"},
+				},
 			},
 		},
 	}
@@ -175,23 +178,41 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 	SetupLogger(cmd)
 
+	username := cmd.StringArg("username")
+
 	config, err := ReadConfig()
 	if err != nil {
 		fmt.Println("Error reading config file:", err.Error())
 		return nil
 	}
 
-	if config.Sinks.LastFm == nil {
-		fmt.Println("Error: last.fm sink is not configured")
+	if len(config.Sinks.LastFm) == 0 {
+		fmt.Println("Error: no last.fm sink is configured")
+		return nil
+	} else if len(config.Sinks.LastFm) > 1 && username == "" {
+		fmt.Println("Error: must specify a username when more than one last.fm sink is configured")
 		return nil
 	}
 
-	if config.Sinks.LastFm.SessionKey != "" && config.Sinks.LastFm.Username != "" {
+	var key string
+	for sinkKey, sink := range config.Sinks.LastFm {
+		if sink.Username == username {
+			key = sinkKey
+		}
+	}
+	if key == "" {
+		fmt.Println("Error: no last.fm sink with this username exists")
+		return nil
+	}
+
+	lastFmConfig := config.Sinks.LastFm[key]
+
+	if lastFmConfig.SessionKey != "" && lastFmConfig.Username != "" {
 		fmt.Println("last.fm is already authenticated")
 		return nil
 	}
 
-	client, err := lastfm.NewDesktopClient(lastfm.BaseURL, config.Sinks.LastFm.Key, config.Sinks.LastFm.Secret)
+	client, err := lastfm.NewDesktopClient(lastfm.BaseURL, lastFmConfig.Key, lastFmConfig.Secret)
 	if err != nil {
 		fmt.Println("Error setting up last.fm client:", err.Error())
 		return nil
@@ -230,8 +251,7 @@ func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 
 	fmt.Println("Logged in with user:", session.Session.Name)
 
-	config.Sinks.LastFm.SessionKey = session.Session.Key
-	config.Sinks.LastFm.Username = session.Session.Name
+	config.Sinks.LastFm[key] = lastFmConfig
 
 	filename := fmt.Sprintf("%s/%s", ConfigDir(), DefaultConfigFileName)
 
