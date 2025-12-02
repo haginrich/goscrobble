@@ -2,3 +2,4 @@
 go = "1.25.3"
 golangci-lint = "2.5.0"
 shellcheck = "latest"
+shfmt = "latest"
