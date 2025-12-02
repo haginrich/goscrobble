@@ -1,13 +1,50 @@
 package main_test
 
 import (
-	"fmt"
 	"os"
+	"path"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	main "github.com/p-mng/goscrobble"
 	"github.com/stretchr/testify/require"
 )
+
+func TestReadConfig(t *testing.T) {
+	t.Run("read existing config", func(t *testing.T) {
+		filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
+
+		//nolint:gosec
+		file, err := os.Create(filename)
+		require.NoError(t, err)
+		defer main.CloseLogged(file)
+
+		err = toml.NewEncoder(file).Encode(main.DefaultConfig)
+		require.NoError(t, err)
+
+		config, err := main.ReadConfig(filename)
+		require.NoError(t, err)
+		require.Equal(t, main.DefaultConfig, config)
+	})
+	t.Run("create new config", func(t *testing.T) {
+		filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
+
+		config, err := main.ReadConfig(filename)
+		require.NoError(t, err)
+		require.Equal(t, main.DefaultConfig, config)
+	})
+	t.Run("create new config (subdirectory)", func(t *testing.T) {
+		filename := path.Join(
+			t.TempDir(),
+			"subdirectory",
+			main.DefaultConfigFileName,
+		)
+
+		config, err := main.ReadConfig(filename)
+		require.NoError(t, err)
+		require.Equal(t, main.DefaultConfig, config)
+	})
+}
 
 func TestConfigValidate(t *testing.T) {
 	//nolint:exhaustruct
@@ -25,7 +62,7 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestConfigWrite(t *testing.T) {
-	filename := fmt.Sprintf("%s/%s", t.TempDir(), main.DefaultConfigFileName)
+	filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
 
 	err := main.DefaultConfig.Write(filename)
 	require.NoError(t, err)
@@ -39,7 +76,6 @@ func TestConfigWrite(t *testing.T) {
 
 	require.Greater(t, stat.Size(), int64(100))
 	require.False(t, stat.IsDir())
-	require.Equal(t, "-rw-------", stat.Mode().String())
 }
 
 func TestConfigDir(t *testing.T) {

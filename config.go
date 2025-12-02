@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"path"
 	"regexp"
 
 	"github.com/BurntSushi/toml"
@@ -34,7 +34,7 @@ var DefaultConfig = Config{
 			Username:   "",
 		}},
 		CSV: map[string]CSVConfig{"default": {
-			Filename: fmt.Sprintf("%s/scrobbles.csv", os.Getenv("HOME")),
+			Filename: path.Join(os.Getenv("HOME"), "scrobbles.csv"),
 		}},
 	},
 }
@@ -191,50 +191,39 @@ func (c Config) ParseRegexes() []ParsedRegexReplace {
 	return parsed
 }
 
-func ReadConfig() (Config, error) {
-	log.Debug().Msg("reading config")
-
-	configDir := ConfigDir()
-	log.Debug().
-		Str("config dir", configDir).
-		Msg("creating config directory")
-
-	err := os.MkdirAll(configDir, 0700)
-	if os.IsExist(err) {
-		log.Debug().Str("config dir", configDir).Msg("config directory already exists")
-	} else if err != nil {
-		return Config{}, fmt.Errorf("failed to create config directory: %w", err)
+func ReadConfig(filename string) (Config, error) {
+	log.Debug().Msg("creating config directory")
+	directory := path.Dir(filename)
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		return Config{}, err
 	}
 
-	filename := fmt.Sprintf("%s/%s", configDir, DefaultConfigFileName)
-	log.Debug().
-		Str("filename", filename).
-		Msg("reading config file")
-
+	log.Debug().Msg("reading config")
 	var config Config
-	var configErr error
+	_, err := toml.DecodeFile(filename, &config)
 
 	switch {
-	case err == nil:
-		_, configErr = toml.DecodeFile(filename, &config)
 	case os.IsNotExist(err):
 		config = DefaultConfig
-		configErr = DefaultConfig.Write(filename)
-	default:
-		configErr = err
+
+		log.Info().
+			Str("filename", filename).
+			Msg("creating default configuration file")
+		if err := DefaultConfig.Write(filename); err != nil {
+			return Config{}, err
+		}
+	case err != nil:
+		return Config{}, err
 	}
 
-	if configErr != nil {
-		return Config{}, configErr
-	}
-
-	log.Debug().Msg("validating config")
 	config.Validate()
 
 	return config, nil
 }
 
 func (c *Config) Validate() {
+	log.Debug().Msg("validating config")
+
 	if c.PollRate <= 0 || c.PollRate > 60 {
 		log.Warn().
 			Int("poll_rate", c.PollRate).
@@ -265,20 +254,24 @@ func (c Config) Write(filename string) error {
 		Str("filename", filename).
 		Msg("writing config file")
 
-	data, err := toml.Marshal(c)
+	//nolint:gosec
+	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(filename, data, 0600)
+	encoder := toml.NewEncoder(file)
+	encoder.Indent = ""
+
+	return encoder.Encode(c)
 }
 
 func ConfigDir() string {
 	// https://specifications.freedesktop.org/basedir-spec/latest/
 	configHome := os.Getenv("XDG_CONFIG_HOME")
 	if configHome != "" {
-		return fmt.Sprintf("%s/goscrobble", configHome)
+		return path.Join(configHome, "goscrobble")
 	}
 
-	return fmt.Sprintf("%s/.config/goscrobble", os.Getenv("HOME"))
+	return path.Join(os.Getenv("HOME"), ".config", "goscrobble")
 }

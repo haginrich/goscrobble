@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -24,14 +25,17 @@ func main() {
 			&cli.BoolFlag{
 				Name:    "debug",
 				Aliases: []string{"d"},
-				Value:   false,
 				Usage:   "print debug log messages",
 			},
 			&cli.BoolFlag{
 				Name:    "json",
 				Aliases: []string{"j"},
-				Value:   false,
 				Usage:   "print log messages in JSON format",
+			},
+			&cli.StringFlag{
+				Name:    "config",
+				Aliases: []string{"c"},
+				Usage:   "use a different configuration file",
 			},
 		},
 		Commands: []*cli.Command{
@@ -71,8 +75,18 @@ func main() {
 				Action: ActionScrobbles,
 			},
 			{
+				Name:   "check-config",
+				Usage:  "Check the config file, creating it if needed",
+				Action: ActionCheckConfig,
+			},
+			{
+				Name:   "list-sources",
+				Usage:  "Print all configured sources",
+				Action: ActionListSources,
+			},
+			{
 				Name:   "list-sinks",
-				Usage:  "Print names of all configured sinks",
+				Usage:  "Print all configured sinks",
 				Action: ActionListSinks,
 			},
 			{
@@ -94,7 +108,8 @@ func main() {
 func ActionRun(_ context.Context, cmd *cli.Command) error {
 	SetupLogger(cmd)
 
-	config, err := ReadConfig()
+	filename := ConfigFilename(cmd)
+	config, err := ReadConfig(filename)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -123,8 +138,8 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 		fmt.Println("No sink provided. Run `goscrobble list-sinks` to list all configured sinks.")
 		return nil
 	}
-
-	config, err := ReadConfig()
+	filename := ConfigFilename(cmd)
+	config, err := ReadConfig(filename)
 	if err != nil {
 		fmt.Println("Error reading config file:", err.Error())
 		return nil
@@ -158,12 +173,47 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+func ActionCheckConfig(_ context.Context, cmd *cli.Command) error {
+	SetupLogger(cmd)
+
+	filename := ConfigFilename(cmd)
+	_, err := ReadConfig(filename)
+	if err != nil {
+		fmt.Println("Error reading config file:", err.Error())
+		return nil
+	}
+
+	fmt.Println("Configuration is valid")
+	return nil
+}
+
+func ActionListSources(_ context.Context, cmd *cli.Command) error {
+	SetupLogger(cmd)
+
+	filename := ConfigFilename(cmd)
+	config, err := ReadConfig(filename)
+	if err != nil {
+		fmt.Println("Error reading config file:", err.Error())
+		return nil
+	}
+
+	tbl := table.New("NAME")
+	for _, sink := range config.SetupSources() {
+		tbl.AddRow(sink.Name())
+	}
+	tbl.Print()
+
+	return nil
+}
+
 func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 	SetupLogger(cmd)
 
-	config, err := ReadConfig()
+	filename := ConfigFilename(cmd)
+	config, err := ReadConfig(filename)
 	if err != nil {
 		fmt.Println("Error reading config file:", err.Error())
+		return nil
 	}
 
 	tbl := table.New("ID", "NAME")
@@ -180,7 +230,8 @@ func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 
 	username := cmd.StringArg("username")
 
-	config, err := ReadConfig()
+	filename := ConfigFilename(cmd)
+	config, err := ReadConfig(filename)
 	if err != nil {
 		fmt.Println("Error reading config file:", err.Error())
 		return nil
@@ -253,8 +304,6 @@ func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 
 	config.Sinks.LastFm[key] = lastFmConfig
 
-	filename := fmt.Sprintf("%s/%s", ConfigDir(), DefaultConfigFileName)
-
 	if err := config.Write(filename); err != nil {
 		log.Error().
 			Err(err).
@@ -282,4 +331,12 @@ func SetupLogger(cmd *cli.Command) {
 	} else {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
+}
+
+func ConfigFilename(cmd *cli.Command) string {
+	filename := cmd.String("config")
+	if filename == "" {
+		return path.Join(ConfigDir(), DefaultConfigFileName)
+	}
+	return filename
 }
