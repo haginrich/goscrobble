@@ -216,13 +216,15 @@ func ReadConfig(filename string) (Config, error) {
 		return Config{}, err
 	}
 
+	log.Debug().Msg("successfully read configuration")
+
 	config.Validate()
 
 	return config, nil
 }
 
 func (c *Config) Validate() {
-	log.Debug().Msg("validating config")
+	log.Debug().Msg("validating configuration")
 
 	if c.PollRate <= 0 || c.PollRate > 60 {
 		log.Warn().
@@ -247,6 +249,8 @@ func (c *Config) Validate() {
 	if !c.NotifyOnError {
 		log.Warn().Msg("goscrobble will not send desktop notifications on failed scrobbles")
 	}
+
+	log.Debug().Msg("validated configuration")
 }
 
 func (c Config) Write(filename string) error {

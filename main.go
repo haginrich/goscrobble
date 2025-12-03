@@ -94,7 +94,7 @@ func main() {
 				Usage:  "Authenticate last.fm sand save session key and username",
 				Action: ActionAuthLastFm,
 				Arguments: []cli.Argument{
-					&cli.StringArg{Name: "username"},
+					&cli.StringArg{Name: "key"},
 				},
 			},
 		},
@@ -116,9 +116,6 @@ func ActionRun(_ context.Context, cmd *cli.Command) error {
 			Msg("error reading config file")
 		return nil
 	}
-	log.Debug().
-		Interface("config", config).
-		Msg("parsed config")
 
 	RunMainLoop(config)
 
@@ -228,7 +225,7 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 	SetupLogger(cmd)
 
-	username := cmd.StringArg("username")
+	key := cmd.StringArg("key")
 
 	filename := ConfigFilename(cmd)
 	config, err := ReadConfig(filename)
@@ -240,19 +237,11 @@ func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 	if len(config.Sinks.LastFm) == 0 {
 		fmt.Println("Error: no last.fm sink is configured")
 		return nil
-	} else if len(config.Sinks.LastFm) > 1 && username == "" {
-		fmt.Println("Error: must specify a username when more than one last.fm sink is configured")
+	} else if len(config.Sinks.LastFm) > 1 && key == "" {
+		fmt.Println("Error: must specify a key when more than one last.fm sink is configured")
 		return nil
-	}
-
-	var key string
-	for sinkKey, sink := range config.Sinks.LastFm {
-		if sink.Username == username {
-			key = sinkKey
-		}
-	}
-	if key == "" {
-		fmt.Println("Error: no last.fm sink with this username exists")
+	} else if _, ok := config.Sinks.LastFm[key]; !ok {
+		fmt.Println("Error: no last.fm sink with this key exists")
 		return nil
 	}
 
@@ -302,12 +291,12 @@ func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
 
 	fmt.Println("Logged in with user:", session.Session.Name)
 
+	lastFmConfig.SessionKey = session.Session.Key
+	lastFmConfig.Username = session.Session.Name
 	config.Sinks.LastFm[key] = lastFmConfig
 
 	if err := config.Write(filename); err != nil {
-		log.Error().
-			Err(err).
-			Msg("error writing updated config file")
+		fmt.Println("Error writing updated config file:", err.Error())
 		return nil
 	}
 
