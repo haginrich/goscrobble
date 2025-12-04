@@ -19,7 +19,3 @@ linters:
         - 'github.com\/rs\/zerolog\..*'
         - 'github.com\/urfave\/cli\/v3\..*'
       allow-empty: true
-    unused:
-      field-writes-are-uses: false
-      exported-fields-are-used: false
-      local-variables-are-used: false
