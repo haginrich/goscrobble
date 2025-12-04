@@ -250,6 +250,11 @@ func (c *Config) Validate() {
 		log.Warn().Msg("goscrobble will not send desktop notifications on failed scrobbles")
 	}
 
+	if c.Sources.MediaControl != nil && len(c.Sources.MediaControl.Arguments) == 0 {
+		log.Warn().Msg("no arguments for media-control specified, using `get --now`")
+		c.Sources.MediaControl.Arguments = []string{"get", "--now"}
+	}
+
 	log.Debug().Msg("validated configuration")
 }
 
