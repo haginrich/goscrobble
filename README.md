@@ -9,7 +9,7 @@ A simple, cross-platform music scrobbler daemon. Inspired by audio software like
 > [!WARNING]
 > This project is still beta software. Features may break without warning (especially on macOS), scrobbling may be unreliable, and the config file format is subject to change. Use at your own risk.
 >
-> This README refers to the `main` branch. To view the README for a specific version, check out the corresponding tagged commit.
+> **Note:** This README refers to the `main` branch. To view the README for a specific version, check out the corresponding tagged commit.
 
 ## Installation
 
@@ -33,7 +33,7 @@ brew install media-control terminal-notifier
 
 ## Configuration
 
-A configuration file is created automatically in your config directory (usually `$HOME/.config/goscrobble/config.toml`).
+A configuration file is created automatically in your config directory (usually `$HOME/.config/goscrobble/config.toml`). See <https://toml.io/en/> for TOML syntax.
 
 <details>
 
@@ -51,44 +51,56 @@ notify_on_scrobble = false
 # send a desktop notification when a scrobble cannot be saved
 notify_on_error = true
 # player blacklist
-blacklist = ['chromium', 'firefox']
+blacklist = ["chromium", "firefox"]
 
 # regex match/replace
 [[regexes]]
-match = ' - [0-9]+ Remaster(ed)?'
-replace = ''
+match = " - [0-9]+ Remaster(ed)?"
+replace = ""
 artist = false
 track = true
 album = true
 
 [[regexes]]
-match = ' - Radio Edit'
-replace = ' (Radio Edit)'
+match = " - Radio Edit"
+replace = " (Radio Edit)"
 track = true
 
+# MPRIS2 dbus interface
+# https://specifications.freedesktop.org/mpris/latest/
 [sources.dbus]
 # dbus address: if empty, connect to the session bus
-address = ''
+address = ""
 
+# ungive/media-control
+# https://github.com/ungive/media-control
 [sources.media-control]
-# path to the 'media-control' binary
-command = 'media-control'
-# arguments, no need to change this
-arguments = ['get', '--now']
+# path to the "media-control" binary
+command = "media-control"
+# media-control arguments, if empty use the following default value
+arguments = ["get", "--now"]
 
-[sinks.lastfm]
+[sinks.lastfm.default]
+# replace this for sites that support the Audioscrobbler v2.0 API
+# if empty, use last.fm API
+base_url = "https://ws.audioscrobbler.com/2.0/"
 # last.fm API key
-key = 'replace with last.fm API key'
+key = "replace with last.fm API key"
 # last.fm API shared secret
-secret = 'replace with last.fm API secret'
-# last.fm session key, automatically set by 'goscrobble lastfm-auth'
-session_key = ''
-# last.fm username, automatically set by 'goscrobble lastfm-auth'
-username = ''
+secret = "replace with last.fm API secret"
+# last.fm session key, automatically set by "goscrobble lastfm-auth"
+session_key = ""
+# last.fm username, automatically set by "goscrobble lastfm-auth"
+username = ""
 
-[sinks.csv]
+[sinks.csv.default]
 # filename to write scrobbles to, defaults to $HOME/scrobbles.csv
-filename = '/Users/patrick/scrobbles.csv'
+filename = "/home/username/scrobbles.csv"
+
+[sinks.csv.network]
+# you can define sinks multiple times using different keys
+# this example defines two CSV sinks: "default" and "network"
+filename = "/network/data/scrobbles.csv"
 ```
 
 </details>
