@@ -213,9 +213,9 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	tbl := table.New("ID", "NAME")
+	tbl := table.New("NAME")
 	for _, sink := range config.SetupSinks() {
-		tbl.AddRow(sink.ID(), sink.Name())
+		tbl.AddRow(sink.Name())
 	}
 	tbl.Print()
 

@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"crypto/sha256"
 	"encoding/csv"
-	"encoding/hex"
 	"os"
 	"slices"
 	"time"
@@ -22,11 +20,6 @@ func CSVSinkFromConfig(c CSVConfig) CSVSink {
 
 func (s CSVSink) Name() string {
 	return "csv"
-}
-
-func (s CSVSink) ID() string {
-	sum := sha256.Sum256([]byte(s.Filename))
-	return hex.EncodeToString(sum[:4])
 }
 
 func (s CSVSink) NowPlaying(_ Scrobble) error {
