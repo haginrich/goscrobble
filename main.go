@@ -194,11 +194,9 @@ func ActionListSources(_ context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	tbl := table.New("NAME")
 	for _, sink := range config.SetupSources() {
-		tbl.AddRow(sink.Name())
+		fmt.Println(sink.Name())
 	}
-	tbl.Print()
 
 	return nil
 }
@@ -213,11 +211,9 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	tbl := table.New("NAME")
 	for _, sink := range config.SetupSinks() {
-		tbl.AddRow(sink.Name())
+		fmt.Println(sink.Name())
 	}
-	tbl.Print()
 
 	return nil
 }
