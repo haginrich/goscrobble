@@ -92,7 +92,7 @@ func main() {
 			{
 				Name:   "lastfm-auth",
 				Usage:  "Authenticate last.fm sand save session key and username",
-				Action: ActionAuthLastFm,
+				Action: ActionLastFmAuth,
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "key"},
 				},
@@ -222,7 +222,7 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func ActionAuthLastFm(_ context.Context, cmd *cli.Command) error {
+func ActionLastFmAuth(_ context.Context, cmd *cli.Command) error {
 	SetupLogger(cmd)
 
 	key := cmd.StringArg("key")
