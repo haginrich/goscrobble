@@ -3,9 +3,9 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +16,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
+
+type ContextKey int
+
+const ContextConfigKey ContextKey = iota
 
 func main() {
 	cmd := &cli.Command{
@@ -91,7 +95,7 @@ func main() {
 			},
 			{
 				Name:   "lastfm-auth",
-				Usage:  "Authenticate last.fm sand save session key and username",
+				Usage:  "Authenticate last.fm and save session key and username",
 				Action: ActionLastFmAuth,
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "key"},
@@ -100,46 +104,44 @@ func main() {
 		},
 	}
 
+	cmd.Before = func(ctx context.Context, _ *cli.Command) (context.Context, error) {
+		SetupLogger(cmd)
+
+		filename := ConfigFilename(cmd)
+		config, err := ReadConfig(filename)
+		if err != nil {
+			return ctx, fmt.Errorf("cannot read config file: %s", err.Error())
+		}
+
+		ctx = context.WithValue(ctx, ContextConfigKey, config)
+
+		return ctx, nil
+	}
+
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		fmt.Println("Error:", err.Error())
 	}
 }
 
-func ActionRun(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
-	filename := ConfigFilename(cmd)
-	config, err := ReadConfig(filename)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("error reading config file")
-		return nil
-	}
+func ActionRun(ctx context.Context, _ *cli.Command) error {
+	config := ctx.Value(ContextConfigKey).(Config)
 
 	RunMainLoop(config)
 
 	return nil
 }
 
-func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
+func ActionScrobbles(ctx context.Context, cmd *cli.Command) error {
 	limit := cmd.Int("limit")
 	from := cmd.Timestamp("from")
 	to := cmd.Timestamp("to")
 
 	sinkName := cmd.StringArg("sink")
 
+	config := ctx.Value(ContextConfigKey).(Config)
+
 	if sinkName == "" {
-		fmt.Println("No sink provided. Run `goscrobble list-sinks` to list all configured sinks.")
-		return nil
-	}
-	filename := ConfigFilename(cmd)
-	config, err := ReadConfig(filename)
-	if err != nil {
-		fmt.Println("Error reading config file:", err.Error())
-		return nil
+		return errors.New("no sink provided (run `goscrobble list-sinks` to list all configured sinks)")
 	}
 
 	var sink Sink
@@ -151,14 +153,12 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 	}
 
 	if sink == nil {
-		fmt.Println("Invalid sink name. Run `goscrobble list-sinks` to list all configured sinks.")
-		return nil
+		return errors.New("invalid sink name (run `goscrobble list-sinks` to list all configured sinks)")
 	}
 
 	scrobbles, err := sink.GetScrobbles(limit, from, to)
 	if err != nil {
-		fmt.Println("Error fetching scrobbles:", err.Error())
-		return nil
+		return fmt.Errorf("error fetching scrobbles: %s", err.Error())
 	}
 
 	tbl := table.New("ARTISTS", "TRACK", "ALBUM", "DURATION", "TIMESTAMP")
@@ -170,29 +170,15 @@ func ActionScrobbles(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func ActionCheckConfig(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
-	filename := ConfigFilename(cmd)
-	_, err := ReadConfig(filename)
-	if err != nil {
-		fmt.Println("Error reading config file:", err.Error())
-		return nil
-	}
+func ActionCheckConfig(ctx context.Context, _ *cli.Command) error {
+	_ = ctx.Value(ContextConfigKey).(Config)
 
 	fmt.Println("Configuration is valid")
 	return nil
 }
 
-func ActionListSources(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
-	filename := ConfigFilename(cmd)
-	config, err := ReadConfig(filename)
-	if err != nil {
-		fmt.Println("Error reading config file:", err.Error())
-		return nil
-	}
+func ActionListSources(ctx context.Context, _ *cli.Command) error {
+	config := ctx.Value(ContextConfigKey).(Config)
 
 	for _, sink := range config.SetupSources() {
 		fmt.Println(sink.Name())
@@ -201,15 +187,8 @@ func ActionListSources(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func ActionListSinks(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
-	filename := ConfigFilename(cmd)
-	config, err := ReadConfig(filename)
-	if err != nil {
-		fmt.Println("Error reading config file:", err.Error())
-		return nil
-	}
+func ActionListSinks(ctx context.Context, _ *cli.Command) error {
+	config := ctx.Value(ContextConfigKey).(Config)
 
 	for _, sink := range config.SetupSinks() {
 		fmt.Println(sink.Name())
@@ -218,53 +197,39 @@ func ActionListSinks(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func ActionLastFmAuth(_ context.Context, cmd *cli.Command) error {
-	SetupLogger(cmd)
-
+func ActionLastFmAuth(ctx context.Context, cmd *cli.Command) error {
 	key := cmd.StringArg("key")
 
-	filename := ConfigFilename(cmd)
-	config, err := ReadConfig(filename)
-	if err != nil {
-		fmt.Println("Error reading config file:", err.Error())
-		return nil
-	}
+	config := ctx.Value(ContextConfigKey).(Config)
 
 	if len(config.Sinks.LastFm) == 0 {
-		fmt.Println("Error: no last.fm sink is configured")
-		return nil
+		return errors.New("no last.fm sink is configured")
 	} else if len(config.Sinks.LastFm) > 1 && key == "" {
-		fmt.Println("Error: must specify a key when more than one last.fm sink is configured")
-		return nil
+		return errors.New("must specify a key when more than one last.fm sink is configured")
 	} else if _, ok := config.Sinks.LastFm[key]; !ok {
-		fmt.Println("Error: no last.fm sink with this key exists")
-		return nil
+		return errors.New("no last.fm sink with this key exists")
 	}
 
 	lastFmConfig := config.Sinks.LastFm[key]
 
 	if lastFmConfig.SessionKey != "" && lastFmConfig.Username != "" {
-		fmt.Println("last.fm is already authenticated")
-		return nil
+		return errors.New("last.fm is already authenticated")
 	}
 
 	client, err := lastfm.NewDesktopClient(lastfm.BaseURL, lastFmConfig.Key, lastFmConfig.Secret)
 	if err != nil {
-		fmt.Println("Error setting up last.fm client:", err.Error())
-		return nil
+		return fmt.Errorf("cannot set up last.fm client: %s", err.Error())
 	}
 
 	token, err := client.AuthGetToken()
 	if err != nil {
-		fmt.Println("Error getting authorization token:", err.Error())
-		return nil
+		return fmt.Errorf("cannot get authorization token: %s", err.Error())
 	}
 
-	authURL := client.DesktopAuthorizationURL(token.Token)
+	fmt.Println("Warning: authenticating last.fm will rewrite your config file and remove all comments!")
 
-	//nolint:gosec
-	openBrowserCmd := exec.Command("/usr/bin/env", "xdg-open", authURL)
-	if err := openBrowserCmd.Run(); err != nil {
+	authURL := client.DesktopAuthorizationURL(token.Token)
+	if err := OpenURL(authURL); err != nil {
 		fmt.Println("Error opening URL in default browser:", err.Error())
 	}
 
@@ -276,13 +241,12 @@ func ActionLastFmAuth(_ context.Context, cmd *cli.Command) error {
 
 	response := strings.ToLower(strings.TrimSpace(input.Text()))
 	if response != "y" && response != "" {
-		return nil
+		return errors.New("invalid input")
 	}
 
 	session, err := client.AuthGetSession(token.Token)
 	if err != nil {
-		fmt.Println("Error fetching session key from last.fm API:", err.Error())
-		return nil
+		return fmt.Errorf("cannot fetch session key from last.fm API: %s", err.Error())
 	}
 
 	fmt.Println("Logged in with user:", session.Session.Name)
@@ -291,9 +255,10 @@ func ActionLastFmAuth(_ context.Context, cmd *cli.Command) error {
 	lastFmConfig.Username = session.Session.Name
 	config.Sinks.LastFm[key] = lastFmConfig
 
+	filename := ConfigFilename(cmd)
+
 	if err := config.Write(filename); err != nil {
-		fmt.Println("Error writing updated config file:", err.Error())
-		return nil
+		return fmt.Errorf("cannnot write updated config file: %s", err.Error())
 	}
 
 	return nil
