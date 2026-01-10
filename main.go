@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -321,7 +321,7 @@ func SetupLogger(cmd *cli.Command) {
 func ConfigFilename(cmd *cli.Command) string {
 	filename := cmd.String("config")
 	if filename == "" {
-		return path.Join(ConfigDir(), DefaultConfigFileName)
+		return filepath.Join(ConfigDir(), DefaultConfigFileName)
 	}
 	return filename
 }

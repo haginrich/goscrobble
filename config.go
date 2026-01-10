@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 
 	"github.com/BurntSushi/toml"
@@ -34,7 +34,7 @@ var DefaultConfig = Config{
 			Username:   "",
 		}},
 		CSV: map[string]CSVConfig{"default": {
-			Filename: path.Join(os.Getenv("HOME"), "scrobbles.csv"),
+			Filename: filepath.Join(os.Getenv("HOME"), "scrobbles.csv"),
 		}},
 	},
 }
@@ -193,7 +193,7 @@ func (c Config) ParseRegexes() []ParsedRegexReplace {
 
 func ReadConfig(filename string) (Config, error) {
 	log.Debug().Msg("creating config directory")
-	directory := path.Dir(filename)
+	directory := filepath.Dir(filename)
 	if err := os.MkdirAll(directory, 0700); err != nil {
 		return Config{}, err
 	}
@@ -279,8 +279,7 @@ func ConfigDir() string {
 	// https://specifications.freedesktop.org/basedir-spec/latest/
 	configHome := os.Getenv("XDG_CONFIG_HOME")
 	if configHome != "" {
-		return path.Join(configHome, "goscrobble")
+		return filepath.Join(configHome, "goscrobble")
 	}
-
-	return path.Join(os.Getenv("HOME"), ".config", "goscrobble")
+	return filepath.Join(os.Getenv("HOME"), ".config", "goscrobble")
 }

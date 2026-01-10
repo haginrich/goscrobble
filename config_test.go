@@ -2,7 +2,7 @@ package main_test
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -12,7 +12,7 @@ import (
 
 func TestReadConfig(t *testing.T) {
 	t.Run("read existing config", func(t *testing.T) {
-		filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
+		filename := filepath.Join(t.TempDir(), main.DefaultConfigFileName)
 
 		//nolint:gosec
 		file, err := os.Create(filename)
@@ -27,14 +27,14 @@ func TestReadConfig(t *testing.T) {
 		require.Equal(t, main.DefaultConfig, config)
 	})
 	t.Run("create new config", func(t *testing.T) {
-		filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
+		filename := filepath.Join(t.TempDir(), main.DefaultConfigFileName)
 
 		config, err := main.ReadConfig(filename)
 		require.NoError(t, err)
 		require.Equal(t, main.DefaultConfig, config)
 	})
 	t.Run("create new config (subdirectory)", func(t *testing.T) {
-		filename := path.Join(
+		filename := filepath.Join(
 			t.TempDir(),
 			"subdirectory",
 			main.DefaultConfigFileName,
@@ -62,7 +62,7 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestConfigWrite(t *testing.T) {
-	filename := path.Join(t.TempDir(), main.DefaultConfigFileName)
+	filename := filepath.Join(t.TempDir(), main.DefaultConfigFileName)
 
 	err := main.DefaultConfig.Write(filename)
 	require.NoError(t, err)
