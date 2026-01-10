@@ -74,18 +74,13 @@ func (s MediaControlSource) GetInfo(
 // https://github.com/ungive/media-control
 // https://github.com/ungive/mediaremote-adapter
 type MediaControlInfo struct {
-	PlaybackRate          int       `json:"playbackRate"`
-	Album                 string    `json:"album"`
-	ElapsedTimeNow        float64   `json:"elapsedTimeNow"`
-	ElapsedTime           float64   `json:"elapsedTime"`
-	Timestamp             time.Time `json:"timestamp"`
-	BundleIdentifier      string    `json:"bundleIdentifier"`
-	ProcessIdentifier     int       `json:"processIdentifier"`
-	ArtworkData           string    `json:"artworkData"`
-	Title                 string    `json:"title"`
-	ArtworkMimeType       string    `json:"artworkMimeType"`
-	Duration              float64   `json:"duration"`
-	Artist                string    `json:"artist"`
-	ContentItemIdentifier string    `json:"contentItemIdentifier"`
-	Playing               bool      `json:"playing"`
+	Album            string    `json:"album"`
+	ElapsedTimeNow   float64   `json:"elapsedTimeNow"`
+	ElapsedTime      float64   `json:"elapsedTime"`
+	Timestamp        time.Time `json:"timestamp"`
+	BundleIdentifier string    `json:"bundleIdentifier"`
+	Title            string    `json:"title"`
+	Duration         float64   `json:"duration"`
+	Artist           string    `json:"artist"`
+	Playing          bool      `json:"playing"`
 }
