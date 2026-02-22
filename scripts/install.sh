@@ -34,7 +34,7 @@ if [[ -z "$(which goscrobble)" ]]; then
 	GOPATH=${GOPATH:-"$HOME/go"}
 
 	echo "goscrobble not found in path, assuming installation at $GOPATH/goscrobble"
-	GOSCROBBLE_PATH="$GOPATH/go/bin/goscrobble"
+	GOSCROBBLE_PATH="$GOPATH/bin/goscrobble"
 else
 	echo "goscrobble installation found at $(which goscrobble)"
 	GOSCROBBLE_PATH="$(which goscrobble)"
