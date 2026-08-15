@@ -15,7 +15,22 @@ A simple, cross-platform music scrobbler daemon. Inspired by audio software like
 
 ## Installation
 
-### Manual Installation
+### macOS
+
+1. Add the homebrew tap: `brew tap p-mng/goscrobble`.
+2. Install the package using `brew install goscrobble`.
+3. Enable the service using `brew services start goscrobble` (optional).
+
+### Arch Linux
+
+1. Install [goscrobble](https://aur.archlinux.org/packages/goscrobble) from the Arch User Repository.
+2. Enable the systemd user service using `systemctl --user enable goscrobble.service` (optional).
+
+### Manual Installation (Linux/macOS)
+
+<details>
+
+<summary>Manual installation is only recommended for advanced users.</summary>
 
 1. Install the binary using `go install github.com/p-mng/goscrobble@latest`.
 2. Install the service file (`goscrobble.service` if on Linux<sup>1</sup>, `io.github.p-mng.goscrobble.plist` if on macOS<sup>2</sup>); replace `$GOSCROBBLE_PATH` with the binary location from the previous step.
@@ -26,9 +41,7 @@ A simple, cross-platform music scrobbler daemon. Inspired by audio software like
 
 <sup>2</sup>) Documentation for launchd/macOS: <https://support.apple.com/guide/terminal/script-management-with-launchd-apdc6c1077b-5d5d-4d35-9c19-60f2397b2369/mac>
 
-### Arch Linux
-
-[goscrobble](https://aur.archlinux.org/packages/goscrobble) is available on the Arch User Repository. The package also provides the systemd user service that can be enabled with `systemctl --user enable goscrobble.service`.
+</details>
 
 ## Configuration
 
