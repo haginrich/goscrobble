@@ -9,6 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const MediaControlBinary = "/opt/homebrew/bin/media-control"
+
 type MediaControlSource struct {
 	Command   string
 	Arguments []string

@@ -24,8 +24,11 @@ var DefaultConfig = Config{
 	NotifyOnScrobble:    false,
 	NotifyOnError:       true,
 	Sources: SourcesConfig{
-		DBus:         &DBusConfig{Address: ""},
-		MediaControl: &MediaControlConfig{Command: "media-control", Arguments: []string{"get", "--now"}},
+		DBus: &DBusConfig{Address: ""},
+		MediaControl: &MediaControlConfig{
+			Command:   MediaControlBinary,
+			Arguments: []string{"get", "--now"},
+		},
 		TidalHifi: &TidalHifiConfig{
 			Endpoint: DefaultTidalHifiEndpoint,
 		},

@@ -1,4 +1,4 @@
-# goscrobble 🎧💿
+# goscrobble
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/p-mng/goscrobble/go.yml) ![GitHub Tag](https://img.shields.io/github/v/tag/p-mng/goscrobble) ![AUR Version](https://img.shields.io/aur/version/goscrobble)
 
@@ -6,10 +6,21 @@
 
 A simple, cross-platform music scrobbler daemon. Inspired by audio software like PulseAudio and PipeWire, it can be configured to connect different _sources_ (e.g., media players) and _sinks_ (e.g., last.fm).
 
-![goscrobble diagram](assets/diagram.svg)
+### Features
+
+- Lightweight and privacy-oriented
+- Available on macOS and Linux
+- Many supported media players ("sources")
+  - all media players on Linux implementing MPRIS2 (e.g., mpv, VLC, Spotify, and many others)
+  - all media players on macOS using [ungive/media-control](https://github.com/ungive/media-control)
+  - Tidal using the [tidal-hifi](https://github.com/Mastermindzh/tidal-hifi) JSON API
+  - Tidal using the [TidaLuna](https://github.com/Inrixia/TidaLuna) [EddyAPI](https://github.com/espeon/luna-plugins/tree/master/plugins/eddyapi)
+- Supports different "sinks"
+  - last.fm
+  - one or more local CSV files
 
 > [!NOTE]
-> This project is still beta software. Features may break without warning, scrobbling may be unreliable, and the config file format is subject to change. Use at your own risk.
+> This project is still beta software. Features may break without warning, scrobbling may be unreliable, and the config file format is subject to change.
 >
 > **Note:** This README refers to the `main` branch. To view the README for a specific version, check out the corresponding tagged commit.
 
@@ -84,10 +95,9 @@ track = true
 # dbus address: if empty, connect to the session bus
 address = ""
 
-# https://github.com/ungive/media-control
 [sources.media-control]
 # path to the "media-control" binary
-command = "media-control"
+command = "/opt/homebrew/bin/media-control"
 # media-control arguments, if empty use the following default value
 arguments = ["get", "--now"]
 
