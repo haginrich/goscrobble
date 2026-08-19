@@ -97,6 +97,13 @@ arguments = ["get", "--now"]
 # endpoint to fetch data from
 endpoint = "http://localhost:47836/current"
 
+# https://github.com/espeon/luna-plugins
+# EddyAPI plugin for TidaLuna
+[sources.eddyapi]
+endpoint = "http://localhost:3665/now-playing"
+# include the version of the song when scrobbling (e.g., "Remastered")
+include_version = false
+
 [sinks.lastfm.default]
 # replace this for sites that support the Audioscrobbler v2.0 API
 # if empty, use last.fm API

@@ -66,12 +66,12 @@ func (s TidalHifiSource) GetInfo() (map[string]PlaybackStatus, error) {
 		return nil, err
 	}
 
-	var status PlaybackState
+	var state PlaybackState
 	switch body.Status {
 	case "playing":
-		status = PlaybackPlaying
+		state = PlaybackPlaying
 	case "paused":
-		status = PlaybackPaused
+		state = PlaybackPaused
 	default:
 		return nil, errors.New("invalid playback status returned by API")
 	}
@@ -84,12 +84,11 @@ func (s TidalHifiSource) GetInfo() (map[string]PlaybackStatus, error) {
 			Duration:  time.Duration(body.DurationInSeconds * int(time.Second)),
 			Timestamp: time.Time{},
 		},
-		State:    status,
+		State:    state,
 		Position: time.Duration(body.CurrentInSeconds * float64(time.Second)),
 	}
-	playerName := fmt.Sprintf("%s:%s", s.Name(), s.Endpoint)
 
 	return map[string]PlaybackStatus{
-		playerName: info,
+		fmt.Sprintf("%s:%s", s.Name(), s.Endpoint): info,
 	}, nil
 }

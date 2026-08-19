@@ -26,7 +26,11 @@ var DefaultConfig = Config{
 		DBus:         &DBusConfig{Address: ""},
 		MediaControl: &MediaControlConfig{Command: "media-control", Arguments: []string{"get", "--now"}},
 		TidalHifi: &TidalHifiConfig{
-			Endpoint: "http://localhost:47836/current",
+			Endpoint: DefaultTidalHifiEndpoint,
+		},
+		EddyAPI: &EddyAPIConfig{
+			Endpoint:       DefaultEddyEndpoint,
+			IncludeVersion: false,
 		},
 	},
 	Sinks: SinksConfig{
@@ -69,6 +73,7 @@ type SourcesConfig struct {
 	DBus         *DBusConfig         `toml:"dbus"`
 	MediaControl *MediaControlConfig `toml:"media-control"`
 	TidalHifi    *TidalHifiConfig    `toml:"tidal-hifi"`
+	EddyAPI      *EddyAPIConfig      `toml:"eddyapi"`
 }
 
 type SinksConfig struct {
@@ -87,6 +92,11 @@ type MediaControlConfig struct {
 
 type TidalHifiConfig struct {
 	Endpoint string `toml:"endpoint"`
+}
+
+type EddyAPIConfig struct {
+	Endpoint       string `toml:"endpoint"`
+	IncludeVersion bool   `toml:"include_version"`
 }
 
 type LastFmConfig struct {
@@ -138,7 +148,7 @@ func (c Config) SetupSources() []Source {
 	if c.Sources.TidalHifi != nil {
 		var endpoint string
 		if c.Sources.TidalHifi.Endpoint == "" {
-			log.Debug().Str("endpoint", DefaultTidalHifiEndpoint).Msg("using default endpoint")
+			log.Debug().Str("endpoint", DefaultTidalHifiEndpoint).Msg("using default endpoint for tidal-hifi API")
 			endpoint = DefaultTidalHifiEndpoint
 		} else {
 			endpoint = c.Sources.TidalHifi.Endpoint
@@ -146,8 +156,25 @@ func (c Config) SetupSources() []Source {
 
 		log.Debug().Msg("setting up tidal-hifi API source")
 		sources = append(sources, TidalHifiSource{
-			Client:   http.Client{},
+			Client:   *http.DefaultClient,
 			Endpoint: endpoint,
+		})
+	}
+
+	if c.Sources.EddyAPI != nil {
+		var endpoint string
+		if c.Sources.EddyAPI.Endpoint == "" {
+			log.Debug().Str("endpoint", DefaultEddyEndpoint).Msg("using default endpoint for EddyAPI")
+			endpoint = DefaultEddyEndpoint
+		} else {
+			endpoint = c.Sources.EddyAPI.Endpoint
+		}
+
+		log.Debug().Msg("setting up EddyAPI source")
+		sources = append(sources, EddyAPISource{
+			Client:         *http.DefaultClient,
+			Endpoint:       endpoint,
+			IncludeVersion: c.Sources.EddyAPI.IncludeVersion,
 		})
 	}
 
