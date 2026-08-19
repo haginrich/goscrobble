@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/godbus/dbus/v5"
@@ -156,7 +157,7 @@ func (c Config) SetupSources() []Source {
 
 		log.Debug().Msg("setting up tidal-hifi API source")
 		sources = append(sources, TidalHifiSource{
-			Client:   *http.DefaultClient,
+			Client:   http.Client{Timeout: time.Second},
 			Endpoint: endpoint,
 		})
 	}
@@ -172,7 +173,7 @@ func (c Config) SetupSources() []Source {
 
 		log.Debug().Msg("setting up EddyAPI source")
 		sources = append(sources, EddyAPISource{
-			Client:         *http.DefaultClient,
+			Client:         http.Client{Timeout: time.Second},
 			Endpoint:       endpoint,
 			IncludeVersion: c.Sources.EddyAPI.IncludeVersion,
 		})
@@ -321,6 +322,7 @@ func (c Config) Write(filename string) error {
 	if err != nil {
 		return err
 	}
+	defer CloseLogged(file)
 
 	encoder := toml.NewEncoder(file)
 	encoder.Indent = ""

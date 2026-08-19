@@ -8,7 +8,7 @@ A simple, cross-platform music scrobbler daemon. Inspired by audio software like
 
 ![goscrobble diagram](assets/diagram.svg)
 
-> [!WARNING]
+> [!NOTE]
 > This project is still beta software. Features may break without warning, scrobbling may be unreliable, and the config file format is subject to change. Use at your own risk.
 >
 > **Note:** This README refers to the `main` branch. To view the README for a specific version, check out the corresponding tagged commit.

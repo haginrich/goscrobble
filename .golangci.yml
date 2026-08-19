@@ -18,4 +18,5 @@ linters:
       exclude:
         - 'github.com\/rs\/zerolog\..*'
         - 'github.com\/urfave\/cli\/v3\..*'
+        - 'net\/http\..*'
       allow-empty: true

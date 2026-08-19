@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"maps"
+	"os"
+	"os/signal"
 	"regexp"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -38,31 +41,55 @@ func RunMainLoop(config Config) {
 	sinks := config.SetupSinks()
 
 	ticker := time.NewTicker(time.Second * time.Duration(config.PollRate))
+	defer func(t *time.Ticker) {
+		t.Stop()
+	}(ticker)
+
+	done := make(chan time.Time, 1)
+	defer close(done)
+
+	signals := make(chan os.Signal, 1)
+	defer close(signals)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	go func(c chan os.Signal, t *time.Ticker) {
+		recv := <-c
+		log.Info().Str("signal", recv.String()).Msg("received stop signal")
+		t.Stop()
+		done <- time.Now()
+	}(signals, ticker)
 
 	for _, line := range logoLines {
 		log.Info().Msg(line)
 	}
 
 	for {
-		RunMainLoopOnce(
-			previouslyPlaying,
-			scrobbledPrevious,
-			playerBlacklist,
-			parsedRegexes,
-			sources,
-			sinks,
-			config.MinPlaybackDuration,
-			config.MinPlaybackPercent,
-			config.NotifyOnScrobble,
-			config.NotifyOnError,
-			SendNotification,
-		)
-
-		timestamp := <-ticker.C
-		log.Debug().
-			Time("timestamp", timestamp).
-			Msg("completed main loop iteration")
+		select {
+		case timestamp := <-ticker.C:
+			RunMainLoopOnce(
+				previouslyPlaying,
+				scrobbledPrevious,
+				playerBlacklist,
+				parsedRegexes,
+				sources,
+				sinks,
+				config.MinPlaybackDuration,
+				config.MinPlaybackPercent,
+				config.NotifyOnScrobble,
+				config.NotifyOnError,
+				SendNotification,
+			)
+			log.Debug().
+				Time("timestamp", timestamp).
+				Msg("completed main loop iteration")
+		case timestamp := <-done:
+			log.Debug().
+				Time("timestamp", timestamp).
+				Msg("received done signal, stopping main loop")
+			return
+		}
 	}
+
 }
 
 func RunMainLoopOnce(
@@ -317,7 +344,7 @@ func MinPlayTime(
 	}
 
 	configDuration := time.Duration(minPlaybackDuration * int(time.Second))
-	halfDuration := time.Duration(minPlaybackPercent * int(duration/100))
+	halfDuration := time.Duration(minPlaybackPercent) * (duration / 100)
 
 	return min(configDuration, halfDuration), nil
 }
