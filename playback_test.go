@@ -1,8 +1,10 @@
 package main_test
 
 import (
+	"encoding/csv"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -94,10 +96,15 @@ func TestScrobbleToStringSlice(t *testing.T) {
 }
 
 func TestScrobbleFromCSV(t *testing.T) {
-	scrobble, err := main.ScrobbleFromCSV(fmt.Sprintf(
+	line := fmt.Sprintf(
 		`"Placebo, David Bowie",Without You I'm Nothing,A Place For Us To Dream,251000,"%s"`,
 		defaultScrobble.Timestamp.Format(time.RFC1123),
-	))
+	)
+
+	record, err := csv.NewReader(strings.NewReader(line)).Read()
+	require.NoError(t, err)
+
+	scrobble, err := main.ScrobbleFromCSV(record)
 	require.NoError(t, err)
 	require.Equal(t, defaultScrobble, scrobble)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"os"
 	"slices"
@@ -31,9 +30,8 @@ func (s CSVSink) Scrobble(scrobble Scrobble) error {
 
 	file, err := os.Open(s.Filename)
 	if err == nil {
-		defer CloseLogged(file)
-
 		scrobbles, err = csv.NewReader(file).ReadAll()
+		CloseLogged(file)
 		if err != nil {
 			return err
 		}
@@ -59,26 +57,21 @@ func (s CSVSink) GetScrobbles(limit int, from, to time.Time) ([]Scrobble, error)
 	}
 	defer CloseLogged(file)
 
-	scanner := bufio.NewScanner(file)
-
 	log.Debug().
 		Str("filename", file.Name()).
 		Msg("reading scrobbles")
 
-	var lines []string
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
+	records, err := csv.NewReader(file).ReadAll()
+	if err != nil {
 		return nil, err
 	}
-	slices.Reverse(lines)
+	slices.Reverse(records)
 
 	noLimit := limit <= 0
 
 	var scrobbles []Scrobble
-	for _, line := range lines {
-		scrobble, err := ScrobbleFromCSV(line)
+	for _, record := range records {
+		scrobble, err := ScrobbleFromCSV(record)
 		if err != nil {
 			return nil, err
 		}
