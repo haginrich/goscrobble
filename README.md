@@ -30,12 +30,14 @@ A simple, cross-platform music scrobbler daemon. Inspired by audio software like
 
 1. Add the homebrew tap: `brew tap p-mng/goscrobble`.
 2. Install the package using `brew install goscrobble`.
-3. Enable the service using `brew services start goscrobble` (optional).
+3. Generate the config file using `goscrobble check-config` (see below).
+4. Enable the service using `brew services start goscrobble`.
 
 ### Arch Linux
 
 1. Install [goscrobble](https://aur.archlinux.org/packages/goscrobble) from the Arch User Repository.
-2. Enable the systemd user service using `systemctl --user enable goscrobble.service` (optional).
+2. Generate the config file using `goscrobble check-config` (see below).
+3. Enable the systemd user service using `systemctl --user enable --now goscrobble.service`.
 
 ### Manual Installation (Linux/macOS)
 
